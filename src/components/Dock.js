@@ -1,7 +1,9 @@
+// Dock.js
 import React from 'react';
 import { motion } from 'framer-motion';
+import appConfig from './appConfig';
 
-const DockIcon = ({ icon, name, onClick, isOpen }) => (
+const DockIcon = ({ icon, name, onClick, isOpen, isMinimized }) => (
   <motion.div 
     className="flex flex-col items-center justify-center cursor-pointer relative"
     whileHover={{ scale: 1.2 }}
@@ -15,20 +17,26 @@ const DockIcon = ({ icon, name, onClick, isOpen }) => (
       {icon}
     </motion.div>
     {isOpen && (
-      <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full"></div>
+      <div className={`absolute -bottom-1 w-1 h-1 ${isMinimized ? 'bg-gray-400' : 'bg-white'} rounded-full`}></div>
     )}
   </motion.div>
 );
 
-const Dock = ({ openWindow, openWallpaperSetter, openNotepad, openWindows = [] }) => {
-  const apps = [
-    { name: 'Finder', icon: '📁', onClick: () => openWindow('Finder', 'This is the Finder window content.') },
-    { name: 'Safari', icon: '🌐', onClick: () => openWindow('Safari', 'This is the Safari window content.') },
-    { name: 'Messages', icon: '💬', onClick: () => openWindow('Messages', 'This is the Messages window content.') },
-    { name: 'Mail', icon: '✉️', onClick: () => openWindow('Mail', 'This is the Mail window content.') },
-    { name: 'Notepad', icon: '📝', onClick: openNotepad },
-    { name: 'Settings', icon: '⚙️', onClick: openWallpaperSetter },
-  ];
+const Dock = ({ openWindow, openWindows = [], restoreWindow }) => {
+  const handleIconClick = (appName) => {
+    const openAppWindow = openWindows.find(window => window.title === appName);
+    if (openAppWindow) {
+      if (openAppWindow.isMinimized) {
+        restoreWindow(openAppWindow.id);
+      } else {
+        // If the window is already open and not minimized, we could focus it here
+        // This would require passing a focusWindow function from Desktop to Dock
+        // focusWindow(openAppWindow.id);
+      }
+    } else {
+      openWindow(appName);
+    }
+  };
 
   return (
     <div className="fixed bottom-2 left-0 right-0 flex justify-center">
@@ -38,15 +46,19 @@ const Dock = ({ openWindow, openWallpaperSetter, openNotepad, openWindows = [] }
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 120 }}
       >
-        {apps.map((app, index) => (
-          <DockIcon 
-            key={index} 
-            icon={app.icon} 
-            name={app.name} 
-            onClick={app.onClick}
-            isOpen={openWindows.some(window => window.title === app.name)}
-          />
-        ))}
+        {appConfig.map((app, index) => {
+          const openAppWindow = openWindows.find(window => window.title === app.name);
+          return (
+            <DockIcon 
+              key={index} 
+              icon={app.icon} 
+              name={app.name} 
+              onClick={() => handleIconClick(app.name)}
+              isOpen={!!openAppWindow}
+              isMinimized={openAppWindow?.isMinimized}
+            />
+          );
+        })}
       </motion.div>
     </div>
   );

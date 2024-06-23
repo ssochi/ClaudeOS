@@ -1,9 +1,9 @@
+// Desktop.js
 import React, { useState, useEffect } from 'react';
 import Dock from './Dock';
 import MenuBar from './MenuBar';
 import Window from './Window';
-import WallpaperSetter from './WallpaperSetter';
-import Notepad from './Notepad';
+import appConfig from './appConfig';
 
 const Desktop = () => {
   const [windows, setWindows] = useState([]);
@@ -20,19 +20,30 @@ const Desktop = () => {
     setCurrentWallpaper(images[0]); // Set the first image as default wallpaper
   }, []);
 
-  const openWindow = (title, content) => {
+  const openWindow = (appName) => {
+    const app = appConfig.find(app => app.name === appName);
+    if (!app) return;
+
+    const newWindowId = Date.now();
     const newWindow = { 
-      id: Date.now(), 
-      title, 
-      content,
-      zIndex: windows.length + 1
+      id: newWindowId, 
+      title: app.name, 
+      content: <app.component 
+        onClose={() => closeWindow(newWindowId)}
+        setWallpaper={app.name === 'Settings' ? setCurrentWallpaper : undefined}
+        wallpapers={app.name === 'Settings' ? wallpapers : undefined}
+        currentWallpaper={app.name === 'Settings' ? currentWallpaper : undefined}
+      />,
+      zIndex: windows.length + 1,
+      size: app.defaultSize, // Use the default size from appConfig
+      isMinimized: false
     };
-    setWindows([...windows, newWindow]);
-    setActiveWindowId(newWindow.id);
+    setWindows(prevWindows => [...prevWindows, newWindow]);
+    setActiveWindowId(newWindowId);
   };
 
   const closeWindow = (id) => {
-    setWindows(windows.filter(window => window.id !== id));
+    setWindows(prevWindows => prevWindows.filter(window => window.id !== id));
     if (activeWindowId === id) {
       const remainingWindows = windows.filter(window => window.id !== id);
       setActiveWindowId(remainingWindows.length > 0 ? remainingWindows[remainingWindows.length - 1].id : null);
@@ -41,27 +52,28 @@ const Desktop = () => {
 
   const focusWindow = (id) => {
     setActiveWindowId(id);
-    setWindows(windows.map(window => 
+    setWindows(prevWindows => prevWindows.map(window => 
       window.id === id 
-        ? {...window, zIndex: Math.max(...windows.map(w => w.zIndex)) + 1} 
+        ? {...window, zIndex: Math.max(...prevWindows.map(w => w.zIndex)) + 1, isMinimized: false} 
         : window
     ));
   };
 
-  const openWallpaperSetter = () => {
-    const wallpaperSetterId = Date.now();
-    openWindow('Wallpaper Settings', 
-      <WallpaperSetter 
-        wallpapers={wallpapers} 
-        currentWallpaper={currentWallpaper} 
-        setWallpaper={setCurrentWallpaper} 
-        closeWindow={() => closeWindow(wallpaperSetterId)} 
-      />
-    );
+  const minimizeWindow = (id) => {
+    setWindows(prevWindows => prevWindows.map(window => 
+      window.id === id ? {...window, isMinimized: true} : window
+    ));
+    if (activeWindowId === id) {
+      const visibleWindows = windows.filter(window => !window.isMinimized && window.id !== id);
+      setActiveWindowId(visibleWindows.length > 0 ? visibleWindows[visibleWindows.length - 1].id : null);
+    }
   };
 
-  const openNotepad = () => {
-    openWindow('Notepad', <Notepad onClose={() => closeWindow(windows[windows.length - 1].id)} />);
+  const restoreWindow = (id) => {
+    setWindows(prevWindows => prevWindows.map(window => 
+      window.id === id ? {...window, isMinimized: false} : window
+    ));
+    focusWindow(id);
   };
 
   return (
@@ -77,18 +89,20 @@ const Desktop = () => {
           id={window.id}
           title={window.title}
           onClose={() => closeWindow(window.id)}
+          onMinimize={() => minimizeWindow(window.id)}
           onFocus={() => focusWindow(window.id)}
           zIndex={window.zIndex}
           isActive={window.id === activeWindowId}
+          isMinimized={window.isMinimized}
+          initialSize={window.size}
         >
           {window.content}
         </Window>
       ))}
       <Dock 
-        openWindow={openWindow} 
-        openWallpaperSetter={openWallpaperSetter}
-        openNotepad={openNotepad}
+        openWindow={openWindow}
         openWindows={windows}
+        restoreWindow={restoreWindow}
       />
     </div>
   );
