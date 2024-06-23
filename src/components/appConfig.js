@@ -3,6 +3,10 @@ import React from 'react';
 import WallpaperSetter from './WallpaperSetter';
 import Notepad from './Notepad';
 import Calendar from './Calendar';
+import Terminal from './Terminal';
+import Calculator from './Calculator';
+import MailApp from './MailApp';
+import SafariApp from './SafariApp';
 
 const appConfig = [
   {
@@ -14,7 +18,7 @@ const appConfig = [
   {
     name: 'Safari',
     icon: '🌐',
-    component: ({ onClose }) => <div>This is the Safari window content.</div>,
+    component: SafariApp,
     defaultSize: { width: 800, height: 600 }
   },
   {
@@ -25,9 +29,9 @@ const appConfig = [
   },
   {
     name: 'Mail',
-    icon: '✉️',
-    component: ({ onClose }) => <div>This is the Mail window content.</div>,
-    defaultSize: { width: 700, height: 500 }
+    icon: '✉️', // You can use an appropriate emoji or a custom icon
+    component: MailApp,
+    defaultSize: { width: 800, height: 600 }
   },
   {
     name: 'Notepad',
@@ -47,6 +51,19 @@ const appConfig = [
     component: Calendar,
     defaultSize: { width: 500, height: 500 }
   },
+  {
+    name: 'Terminal',
+    icon: '🖥️',
+    component: Terminal,
+    defaultSize: { width: 600, height: 400 }
+  },
+  {
+    name: 'Calculator',
+    icon: '🔢', // You can choose a more appropriate emoji or use a custom icon
+    component: Calculator,
+    defaultSize: { width: 300, height: 540 }
+  },
+
 ];
 
 export default appConfig;
