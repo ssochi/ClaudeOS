@@ -2,75 +2,92 @@
 import React from 'react';
 import WallpaperSetter from './WallpaperSetter';
 import Notepad from './Notepad';
-import Calendar from './Calendar';
+import CalendarApp from './CalendarApp';
 import Terminal from './Terminal';
 import Calculator from './Calculator';
 import MailApp from './MailApp';
 import SafariApp from './SafariApp';
 import VSCodeApp from './VSCodeApp';
+import Launchpad from './Launchpad';
 
 const appConfig = [
+  {
+    name: 'Launchpad',
+    icon: '🚀',
+    component: Launchpad,
+    defaultSize: { width: 800, height: 600 },
+    showInDock: true,
+  },
   {
     name: 'Finder',
     icon: '📁',
     component: ({ onClose }) => <div>This is the Finder window content.</div>,
-    defaultSize: { width: 600, height: 400 }
+    defaultSize: { width: 600, height: 400 },
+    showInDock: false,
   },
   {
     name: 'Safari',
     icon: '🌐',
     component: SafariApp,
-    defaultSize: { width: 1000, height: 700 }
+    defaultSize: { width: 1000, height: 700 },
+    showInDock: true,
   },
   {
     name: 'Messages',
     icon: '💬',
     component: ({ onClose }) => <div>This is the Messages window content.</div>,
-    defaultSize: { width: 400, height: 500 }
+    defaultSize: { width: 400, height: 500 },
+    showInDock: false,
   },
   {
     name: 'Mail',
-    icon: '✉️', // You can use an appropriate emoji or a custom icon
+    icon: '✉️',
     component: MailApp,
-    defaultSize: { width: 800, height: 600 }
+    defaultSize: { width: 800, height: 600 },
+    showInDock: true,
   },
   {
     name: 'Notepad',
     icon: '📝',
     component: Notepad,
-    defaultSize: { width: 1000, height: 600 }
+    defaultSize: { width: 1000, height: 600 },
+    showInDock: true,
   },
   {
     name: 'Settings',
     icon: '⚙️',
     component: WallpaperSetter,
-    defaultSize: { width: 800, height: 600 }
+    defaultSize: { width: 800, height: 600 },
+    showInDock: true,
   },
   {
     name: 'Calendar',
     icon: '📅',
-    component: Calendar,
-    defaultSize: { width: 500, height: 500 }
+    component: CalendarApp,
+    defaultSize: { width: 800, height: 600 },
+    showInDock: true,
   },
   {
     name: 'Terminal',
     icon: '🖥️',
     component: Terminal,
-    defaultSize: { width: 600, height: 400 }
+    defaultSize: { width: 600, height: 400 },
+    showInDock: true,
   },
   {
     name: 'Calculator',
-    icon: '🔢', // You can choose a more appropriate emoji or use a custom icon
+    icon: '🔢',
     component: Calculator,
-    defaultSize: { width: 300, height: 540 }
+    defaultSize: { width: 300, height: 540 },
+    showInDock: false,
   },
   {
     name: 'VS Code',
-    icon: '📝', // Using a laptop emoji as an icon for VS Code
+    icon: 'VS',
     component: VSCodeApp,
-    defaultSize: { width: 1024, height: 768 }
+    defaultSize: { width: 1024, height: 768 },
+    showInDock: true,
   },
-
 ];
 
 export default appConfig;

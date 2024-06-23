@@ -22,19 +22,29 @@ const DockIcon = ({ icon, name, onClick, isOpen, isMinimized }) => (
   </motion.div>
 );
 
-const Dock = ({ openWindow, openWindows = [], restoreWindow, focusWindow }) => {
+const Dock = ({ openWindow, openWindows, restoreWindow, focusWindow, openLaunchpad }) => {
   const handleIconClick = (appName) => {
-    const openAppWindow = openWindows.find(window => window.title === appName);
-    if (openAppWindow) {
-      if (openAppWindow.isMinimized) {
-        restoreWindow(openAppWindow.id);
-      } else {
-        focusWindow(openAppWindow.id);
-      }
+    console.log('Dock icon clicked:', appName);
+    if (appName === 'Launchpad') {
+      console.log('Opening Launchpad from Dock');
+      openLaunchpad();
     } else {
-      openWindow(appName);
+      const openAppWindow = openWindows.find(window => window.title === appName);
+      if (openAppWindow) {
+        if (openAppWindow.isMinimized) {
+          restoreWindow(openAppWindow.id);
+        } else {
+          focusWindow(openAppWindow.id);
+        }
+      } else {
+        openWindow(appName);
+      }
     }
   };
+
+  const appsToShowInDock = appConfig.filter(app => 
+    app.showInDock || openWindows.some(window => window.title === app.name)
+  );
 
   return (
     <div className="fixed bottom-2 left-0 right-0 flex justify-center">
@@ -44,7 +54,7 @@ const Dock = ({ openWindow, openWindows = [], restoreWindow, focusWindow }) => {
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 120 }}
       >
-        {appConfig.map((app, index) => {
+        {appsToShowInDock.map((app, index) => {
           const openAppWindow = openWindows.find(window => window.title === app.name);
           return (
             <DockIcon 

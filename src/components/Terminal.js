@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import FileSystem from './fileSystem';
+import fileSystemInstance from './fileSystemSingleton';
 
 const Terminal = ({ onClose }) => {
   const [history, setHistory] = useState([]);
   const [currentLine, setCurrentLine] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [fileSystem] = useState(new FileSystem());
+  const [fileSystem] = useState(fileSystemInstance);
   const terminalRef = useRef(null);
   const contentRef = useRef(null);
 
@@ -92,10 +92,13 @@ const Terminal = ({ onClose }) => {
           output = fileSystem.mkdir(args[0]);
           break;
         case 'touch':
-          output = fileSystem.touch(args[0]);
+          output = fileSystem.touch(args[0], args[1]);
           break;
         case 'ls':
-          output = fileSystem.ls(args[0] || '.').join('\n');
+          const files = fileSystem.ls(args[0] || '.');
+          output = files.map(file => 
+            `${file.name.padEnd(20)} ${file.type.padEnd(10)} ${file.size.toString().padEnd(10)} ${file.modifiedAt.toLocaleString()}`
+          ).join('\n');
           break;
         case 'cat':
           output = fileSystem.cat(args[0]);
@@ -115,11 +118,18 @@ const Terminal = ({ onClose }) => {
         case 'echo':
           output = args.join(' ');
           break;
+        case 'update':
+          output = fileSystem.updateFile(args[0], args.slice(1).join(' '));
+          break;
+        case 'info':
+          const info = fileSystem.getFileInfo(args[0]);
+          output = Object.entries(info).map(([key, value]) => `${key}: ${value}`).join('\n');
+          break;
         case 'clear':
           setHistory([]);
           return;
         case 'help':
-          output = 'Available commands: mkdir, touch, ls, cat, cd, pwd, rm, mv, echo, clear, help';
+          output = 'Available commands: mkdir, touch, ls, cat, cd, pwd, rm, mv, echo, update, info, clear, help';
           break;
         default:
           output = `Command not found: ${cmd}`;
@@ -152,7 +162,7 @@ const Terminal = ({ onClose }) => {
                 <span>{item.content}</span>
               </div>
             ) : (
-              <div>{item.content}</div>
+              <div className="whitespace-pre-wrap">{item.content}</div>
             )}
           </motion.div>
         ))}

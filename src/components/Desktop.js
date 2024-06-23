@@ -1,8 +1,9 @@
 // Desktop.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Dock from './Dock';
 import MenuBar from './MenuBar';
 import Window from './Window';
+import Launchpad from './Launchpad';
 import appConfig from './appConfig';
 
 const Desktop = () => {
@@ -10,19 +11,23 @@ const Desktop = () => {
   const [wallpapers, setWallpapers] = useState([]);
   const [currentWallpaper, setCurrentWallpaper] = useState('');
   const [activeWindowId, setActiveWindowId] = useState(null);
+  const [isLaunchpadOpen, setIsLaunchpadOpen] = useState(false);
 
   useEffect(() => {
-    // Dynamically import all images from the assets folder
     const importAll = (r) => r.keys().map(r);
     const imageContext = require.context('../assets', false, /\.(png|jpe?g|svg)$/);
     const images = importAll(imageContext);
     setWallpapers(images);
-    setCurrentWallpaper(images[0]); // Set the first image as default wallpaper
+    setCurrentWallpaper(images[0]);
   }, []);
 
-  const openWindow = (appName) => {
+  const openWindow = useCallback((appName) => {
+    console.log('Desktop openWindow called with:', appName);
     const app = appConfig.find(app => app.name === appName);
-    if (!app) return;
+    if (!app) {
+      console.error('App not found:', appName);
+      return;
+    }
 
     const newWindowId = Date.now();
     const newWindow = { 
@@ -35,12 +40,13 @@ const Desktop = () => {
         currentWallpaper={app.name === 'Settings' ? currentWallpaper : undefined}
       />,
       zIndex: windows.length + 1,
-      size: app.defaultSize, // Use the default size from appConfig
+      size: app.defaultSize,
       isMinimized: false
     };
     setWindows(prevWindows => [...prevWindows, newWindow]);
     setActiveWindowId(newWindowId);
-  };
+    setIsLaunchpadOpen(false);
+  }, [windows, wallpapers, currentWallpaper]);
 
   const closeWindow = (id) => {
     setWindows(prevWindows => prevWindows.filter(window => window.id !== id));
@@ -76,6 +82,18 @@ const Desktop = () => {
     focusWindow(id);
   };
 
+  const openLaunchpad = useCallback(() => {
+    console.log('Opening Launchpad');
+    setIsLaunchpadOpen(true);
+  }, []);
+
+  const closeLaunchpad = useCallback(() => {
+    console.log('Closing Launchpad');
+    setIsLaunchpadOpen(false);
+  }, []);
+
+  console.log('Desktop render, isLaunchpadOpen:', isLaunchpadOpen);
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       <div 
@@ -99,11 +117,18 @@ const Desktop = () => {
           {window.content}
         </Window>
       ))}
+      {isLaunchpadOpen && (
+        <Launchpad 
+          onClose={closeLaunchpad}
+          openWindow={openWindow}
+        />
+      )}
       <Dock 
         openWindow={openWindow}
         openWindows={windows}
         restoreWindow={restoreWindow}
         focusWindow={focusWindow}
+        openLaunchpad={openLaunchpad}
       />
     </div>
   );

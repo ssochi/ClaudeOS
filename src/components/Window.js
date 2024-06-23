@@ -7,7 +7,9 @@ const Window = ({ id, title, children, onClose, onMinimize, onFocus, zIndex, isA
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [isInteractingWithContent, setIsInteractingWithContent] = useState(false);
   const windowRef = useRef(null);
+  const titleBarRef = useRef(null);
 
   const handleMaximize = useCallback(() => {
     setIsMaximized(prev => {
@@ -22,12 +24,12 @@ const Window = ({ id, title, children, onClose, onMinimize, onFocus, zIndex, isA
     });
   }, [initialSize]);
 
-  const handleDragStart = useCallback(() => {
-    if (!isMaximized) {
+  const handleDragStart = useCallback((event, info) => {
+    if (!isMaximized && !isInteractingWithContent && event.target === titleBarRef.current) {
       setIsDragging(true);
       onFocus(id);
     }
-  }, [isMaximized, onFocus, id]);
+  }, [isMaximized, isInteractingWithContent, onFocus, id]);
 
   const handleDragEnd = useCallback(() => {
     setIsDragging(false);
@@ -71,12 +73,28 @@ const Window = ({ id, title, children, onClose, onMinimize, onFocus, zIndex, isA
     return () => window.removeEventListener('resize', handleWindowResize);
   }, [isMaximized]);
 
+  useEffect(() => {
+    const contentElement = windowRef.current?.querySelector('.window-content');
+    if (contentElement) {
+      const handleContentInteractionStart = () => setIsInteractingWithContent(true);
+      const handleContentInteractionEnd = () => setIsInteractingWithContent(false);
+
+      contentElement.addEventListener('mousedown', handleContentInteractionStart);
+      document.addEventListener('mouseup', handleContentInteractionEnd);
+
+      return () => {
+        contentElement.removeEventListener('mousedown', handleContentInteractionStart);
+        document.removeEventListener('mouseup', handleContentInteractionEnd);
+      };
+    }
+  }, []);
+
   if (isMinimized) return null;
 
   return (
     <motion.div
       ref={windowRef}
-      drag={!isMaximized && !isResizing}
+      drag={!isMaximized && !isResizing && !isInteractingWithContent}
       dragMomentum={false}
       dragElastic={0}
       onDragStart={handleDragStart}
@@ -97,7 +115,10 @@ const Window = ({ id, title, children, onClose, onMinimize, onFocus, zIndex, isA
       className="absolute bg-white bg-opacity-95 backdrop-blur-md rounded-lg shadow-lg overflow-hidden border border-gray-200"
       onClick={() => onFocus(id)}
     >
-      <div className="h-7 px-3 flex items-center justify-between bg-gradient-to-b from-gray-100 to-gray-200 border-b border-gray-300 cursor-move relative">
+      <div 
+        ref={titleBarRef}
+        className="h-7 px-3 flex items-center justify-between bg-gradient-to-b from-gray-100 to-gray-200 border-b border-gray-300 cursor-move relative"
+      >
         <div className="flex space-x-2 items-center">
           <button className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600" onClick={() => onClose(id)}></button>
           <button className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600" onClick={() => onMinimize(id)}></button>
@@ -105,7 +126,7 @@ const Window = ({ id, title, children, onClose, onMinimize, onFocus, zIndex, isA
         </div>
         <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">{title}</span>
       </div>
-      <div className="overflow-auto" style={{ height: 'calc(100% - 1.75rem)' }}>
+      <div className="window-content overflow-auto" style={{ height: 'calc(100% - 1.75rem)' }}>
         {children}
       </div>
       {!isMaximized && (
