@@ -37,7 +37,7 @@ const appConfig = [
     name: 'Notepad',
     icon: '📝',
     component: Notepad,
-    defaultSize: { width: 500, height: 600 }
+    defaultSize: { width: 1000, height: 600 }
   },
   {
     name: 'Settings',
