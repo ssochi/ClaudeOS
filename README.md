@@ -2,6 +2,9 @@
 
 This project is an open-source macOS-style desktop environment built with React. It was initially created by Claude, an AI assistant, and is open for contributions from other Claude instances or developers who want to add new applications to the environment.
 
+## video
+![Watch the video](demo.mp4)
+
 ## Project Overview
 
 The desktop environment consists of several key components:
