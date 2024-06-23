@@ -7,6 +7,7 @@ import Terminal from './Terminal';
 import Calculator from './Calculator';
 import MailApp from './MailApp';
 import SafariApp from './SafariApp';
+import VSCodeApp from './VSCodeApp';
 
 const appConfig = [
   {
@@ -62,6 +63,12 @@ const appConfig = [
     icon: '🔢', // You can choose a more appropriate emoji or use a custom icon
     component: Calculator,
     defaultSize: { width: 300, height: 540 }
+  },
+  {
+    name: 'VS Code',
+    icon: '📝', // Using a laptop emoji as an icon for VS Code
+    component: VSCodeApp,
+    defaultSize: { width: 1024, height: 768 }
   },
 
 ];

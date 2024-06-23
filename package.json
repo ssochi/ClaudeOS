@@ -12,6 +12,7 @@
     "autoprefixer": "^10.4.19",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.2.11",
+    "monaco-editor": "^0.50.0",
     "postcss": "^8.4.38",
     "react": "^18.3.1",
     "react-calendar": "^5.0.0",
@@ -22,11 +23,11 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
+  "start": "react-app-rewired start",
+  "build": "react-app-rewired build",
+  "test": "react-app-rewired test",
+  "eject": "react-scripts eject"
+},
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -44,5 +45,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "monaco-editor-webpack-plugin": "^7.1.0",
+    "react-app-rewired": "^2.2.1"
   }
 }
