@@ -103,6 +103,7 @@ const Desktop = () => {
         openWindow={openWindow}
         openWindows={windows}
         restoreWindow={restoreWindow}
+        focusWindow={focusWindow}
       />
     </div>
   );

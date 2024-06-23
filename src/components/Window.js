@@ -95,6 +95,7 @@ const Window = ({ id, title, children, onClose, onMinimize, onFocus, zIndex, isA
         mass: 1
       }}
       className="absolute bg-white bg-opacity-95 backdrop-blur-md rounded-lg shadow-lg overflow-hidden border border-gray-200"
+      onClick={() => onFocus(id)}
     >
       <div className="h-7 px-3 flex items-center justify-between bg-gradient-to-b from-gray-100 to-gray-200 border-b border-gray-300 cursor-move relative">
         <div className="flex space-x-2 items-center">

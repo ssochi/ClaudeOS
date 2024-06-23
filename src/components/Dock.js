@@ -22,16 +22,14 @@ const DockIcon = ({ icon, name, onClick, isOpen, isMinimized }) => (
   </motion.div>
 );
 
-const Dock = ({ openWindow, openWindows = [], restoreWindow }) => {
+const Dock = ({ openWindow, openWindows = [], restoreWindow, focusWindow }) => {
   const handleIconClick = (appName) => {
     const openAppWindow = openWindows.find(window => window.title === appName);
     if (openAppWindow) {
       if (openAppWindow.isMinimized) {
         restoreWindow(openAppWindow.id);
       } else {
-        // If the window is already open and not minimized, we could focus it here
-        // This would require passing a focusWindow function from Desktop to Dock
-        // focusWindow(openAppWindow.id);
+        focusWindow(openAppWindow.id);
       }
     } else {
       openWindow(appName);

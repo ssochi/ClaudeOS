@@ -19,7 +19,7 @@ const appConfig = [
     name: 'Safari',
     icon: '🌐',
     component: SafariApp,
-    defaultSize: { width: 800, height: 600 }
+    defaultSize: { width: 1000, height: 700 }
   },
   {
     name: 'Messages',
