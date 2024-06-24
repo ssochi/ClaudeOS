@@ -10,7 +10,8 @@ import SafariApp from './SafariApp';
 import VSCodeApp from './VSCodeApp';
 import Launchpad from './Launchpad';
 import Game2048 from './Game2048';
-
+import Tetris from './Tetris';
+import FileManagerApp from './FileManagerApp';
 const appConfig = [
   {
     name: 'Launchpad',
@@ -94,7 +95,20 @@ const appConfig = [
     icon: '🎮',
     component: Game2048,
     defaultSize: { width: 400, height: 650 }
-  }
+  },
+  {
+    name: 'Tetris',
+    icon: '🧱', // Using a brick emoji as the icon
+    component: Tetris,
+    defaultSize: { width: 600, height: 800 }
+  },
+  {
+    name: 'File Manager',
+    icon: '📁', // 或者使用自定义图标
+    component: FileManagerApp,
+    defaultSize: { width: 800, height: 600 },
+    showInDock: true,
+  },
 ];
 
 export default appConfig;

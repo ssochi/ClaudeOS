@@ -11,19 +11,22 @@ import {
   ArrowPathIcon,
   TrashIcon
 } from '@heroicons/react/24/solid';
+import MacOSDialog from './MacOSDialog';
 
 // ConfirmDialog component
-const ConfirmDialog = ({ message, onConfirm, onCancel }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-gray-800 p-4 rounded shadow-lg">
-      <p className="mb-4 text-white">{message}</p>
-      <div className="flex justify-end">
-        <button className="px-4 py-2 bg-red-600 text-white rounded mr-2" onClick={onConfirm}>Confirm</button>
-        <button className="px-4 py-2 bg-gray-600 text-white rounded" onClick={onCancel}>Cancel</button>
-      </div>
-    </div>
-  </div>
-);
+const ConfirmDialog = ({ message, onConfirm, onCancel, isOpen }) => (
+    <MacOSDialog
+      isOpen={isOpen}
+      onClose={onCancel}
+      title="Confirm Action"
+      actions={[
+        { label: "Cancel", onClick: onCancel },
+        { label: "Confirm", onClick: onConfirm, primary: true }
+      ]}
+    >
+      <p className="text-gray-700">{message}</p>
+    </MacOSDialog>
+  );
 
 // FileTreeItem component
 const FileTreeItem = ({ item, depth, onSelect, selectedFile, fileSystem, updateFileTree, onDeleteConfirm }) => {
@@ -100,211 +103,220 @@ const FileTreeItem = ({ item, depth, onSelect, selectedFile, fileSystem, updateF
 };
 
 // FileExplorer component
-const FileExplorer = ({ fileSystem, onFileSelect, forceUpdate, onDeleteConfirm }) => {
-  const [fileTree, setFileTree] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
-
-  const updateFileTree = useCallback(() => {
-    const tree = fileSystem.ls('/');
-    setFileTree(tree);
-  }, [fileSystem]);
-
-  useEffect(() => {
-    updateFileTree();
-  }, [updateFileTree, forceUpdate]);
-
-  const handleSelect = (item) => {
-    setSelectedFile(item.name);
-    onFileSelect(item);
-  };
-
-  const handleNewFile = () => {
-    const fileName = prompt('Enter file name:');
-    if (fileName) {
-      fileSystem.touch(fileName);
-      updateFileTree();
-    }
-  };
-
-  const handleNewFolder = () => {
-    const folderName = prompt('Enter folder name:');
-    if (folderName) {
-      fileSystem.mkdir(folderName);
-      updateFileTree();
-    }
-  };
-
-  return (
-    <div className="text-white bg-gray-800 h-full overflow-auto">
-      <div className="font-bold text-sm py-2 px-4 uppercase flex items-center justify-between">
-        Explorer
-        <div className="flex space-x-2">
-          <button onClick={handleNewFile} className="text-gray-400 hover:text-white">
-            <PlusIcon className="h-4 w-4" />
-          </button>
-          <button onClick={handleNewFolder} className="text-gray-400 hover:text-white">
-            <FolderPlusIcon className="h-4 w-4" />
-          </button>
-          <button onClick={updateFileTree} className="text-gray-400 hover:text-white">
-            <ArrowPathIcon className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-      <div>
-        {fileTree.map((item) => (
-          <FileTreeItem 
-            key={item.name} 
-            item={item} 
-            depth={0} 
-            onSelect={handleSelect}
-            selectedFile={selectedFile}
-            fileSystem={fileSystem}
-            updateFileTree={updateFileTree}
-            onDeleteConfirm={onDeleteConfirm}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Main VSCodeApp component
-const VSCodeApp = ({ onClose }) => {
-  const editorRef = useRef(null);
-  const containerRef = useRef(null);
-  const [fileSystem] = useState(() => fileSystemInstance);
-  const [currentFile, setCurrentFile] = useState(null);
-  const [language, setLanguage] = useState('javascript');
-  const [forceUpdate, setForceUpdate] = useState(0);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [confirmDialogProps, setConfirmDialogProps] = useState({ message: '', onConfirm: null });
-
-  useEffect(() => {
-    if (containerRef.current && !editorRef.current) {
-      editorRef.current = monaco.editor.create(containerRef.current, {
-        value: '',
-        language: 'javascript',
-        theme: 'vs-dark',
-        automaticLayout: true,
-        minimap: { enabled: true }
-      });
-    }
+const FileExplorer = ({ fileSystem, onFileSelect, forceUpdate, onDeleteConfirm, currentPath }) => {
+    const [fileTree, setFileTree] = useState([]);
+    const [selectedFile, setSelectedFile] = useState(null);
   
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.dispose();
-        editorRef.current = null;
+    const updateFileTree = useCallback(() => {
+      const tree = fileSystem.ls(currentPath);
+      setFileTree(tree);
+    }, [fileSystem, currentPath]);
+  
+    useEffect(() => {
+      updateFileTree();
+    }, [updateFileTree, forceUpdate]);
+  
+    const handleSelect = (item) => {
+      setSelectedFile(item.name);
+      onFileSelect(item);
+    };
+  
+    const handleNewFile = () => {
+      const fileName = prompt('Enter file name:');
+      if (fileName) {
+        fileSystem.touch(`${currentPath}/${fileName}`);
+        updateFileTree();
       }
     };
-  }, []);
-
-  const handleFileSelect = useCallback((file) => {
-    console.log(file);
-    if (!file.isDirectory) {
-      const content = fileSystem.cat(file.name);
-      setCurrentFile(file);
   
-      if (editorRef.current) {
-        let model = editorRef.current.getModel();
-        
-        if (!model) {
-          model = monaco.editor.createModel(content || '', 'plaintext');
-        } else {
-          model.setValue(content || '');
-        }
-        
-        if (model) {
-          editorRef.current.setModel(model);
+    const handleNewFolder = () => {
+      const folderName = prompt('Enter folder name:');
+      if (folderName) {
+        fileSystem.mkdir(`${currentPath}/${folderName}`);
+        updateFileTree();
+      }
+    };
   
-          const fileExtension = file.name.split('.').pop();
-          const languageMap = {
-            'js': 'javascript',
-            'ts': 'typescript',
-            'py': 'python',
-            'html': 'html',
-            'css': 'css'
-          };
-          const newLang = languageMap[fileExtension] || 'plaintext';
-          monaco.editor.setModelLanguage(model, newLang);
-          setLanguage(newLang);
-        } else {
-          console.error("Failed to create or set model.");
-        }
-      } else {
-        console.error("Editor is not initialized.");
-      }
-    }
-  }, [fileSystem]);
-
-  const handleSave = useCallback(() => {
-    if (currentFile && editorRef.current) {
-      const content = editorRef.current.getValue();
-      fileSystem.updateFile(currentFile.name, content);
-      setForceUpdate(prev => prev + 1);
-    }
-  }, [currentFile, fileSystem]);
-
-  const handleDeleteConfirm = useCallback((item) => {
-    setConfirmDialogProps({
-      message: `Are you sure you want to delete ${item.name}?`,
-      onConfirm: () => {
-        fileSystem.rm(item.name);
-        if (currentFile && currentFile.name === item.name) {
-          setCurrentFile(null);
-          if (editorRef.current) {
-            editorRef.current.setValue('');
-          }
-        }
-        setForceUpdate(prev => prev + 1);
-        setShowConfirmDialog(false);
-      }
-    });
-    setShowConfirmDialog(true);
-  }, [currentFile, fileSystem]);
-
-  return (
-    <div className="flex flex-col h-full bg-gray-900 text-white">
-      {/* Menu bar */}
-      <div className="flex items-center bg-gray-800 p-2 text-sm">
-        <button className="px-2 hover:bg-gray-700">File</button>
-        <button className="px-2 hover:bg-gray-700">Edit</button>
-        <button className="px-2 hover:bg-gray-700">View</button>
-        <button className="px-2 hover:bg-gray-700">Help</button>
-        <button className="px-2 hover:bg-gray-700" onClick={handleSave}>Save</button>
-      </div>
-
-      {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar (file explorer) */}
-        <div className="w-64 bg-gray-800 overflow-y-auto">
-          <FileExplorer 
-            fileSystem={fileSystem} 
-            onFileSelect={handleFileSelect} 
-            forceUpdate={forceUpdate}
-            onDeleteConfirm={handleDeleteConfirm}
-          />
+    return (
+      <div className="text-white bg-gray-800 h-full overflow-auto">
+        <div className="font-bold text-sm py-2 px-4 uppercase flex items-center justify-between">
+          Explorer
+          <div className="flex space-x-2">
+            <button onClick={handleNewFile} className="text-gray-400 hover:text-white">
+              <PlusIcon className="h-4 w-4" />
+            </button>
+            <button onClick={handleNewFolder} className="text-gray-400 hover:text-white">
+              <FolderPlusIcon className="h-4 w-4" />
+            </button>
+            <button onClick={updateFileTree} className="text-gray-400 hover:text-white">
+              <ArrowPathIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-
-        {/* Editor */}
-        <div ref={containerRef} className="flex-grow" />
+        <div>
+          {fileTree.map((item) => (
+            <FileTreeItem 
+              key={item.name} 
+              item={item} 
+              depth={0} 
+              onSelect={handleSelect}
+              selectedFile={selectedFile}
+              fileSystem={fileSystem}
+              updateFileTree={updateFileTree}
+              onDeleteConfirm={onDeleteConfirm}
+            />
+          ))}
+        </div>
       </div>
-
-      {/* Status bar */}
-      <div className="flex justify-between items-center bg-blue-600 text-white text-xs p-1">
-        <div>{currentFile ? currentFile.name : 'No file open'}</div>
-        <div>{language}</div>
+    );
+  };
+  
+  // Updated VSCodeApp component
+  const VSCodeApp = ({ onClose }) => {
+    const editorRef = useRef(null);
+    const containerRef = useRef(null);
+    const [fileSystem] = useState(() => fileSystemInstance);
+    const [currentFile, setCurrentFile] = useState(null);
+    const [language, setLanguage] = useState('javascript');
+    const [forceUpdate, setForceUpdate] = useState(0);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [confirmDialogProps, setConfirmDialogProps] = useState({ message: '', onConfirm: null });
+    const [currentPath, setCurrentPath] = useState('/vscode');
+  
+    useEffect(() => {
+      // Initialize the vscode directory if it doesn't exist
+      if (!fileSystem.ls('/').some(item => item.name === 'vscode')) {
+        fileSystem.mkdir('/vscode');
+      }
+      setCurrentPath('/vscode');
+    }, [fileSystem]);
+  
+    useEffect(() => {
+      if (containerRef.current && !editorRef.current) {
+        editorRef.current = monaco.editor.create(containerRef.current, {
+          value: '',
+          language: 'javascript',
+          theme: 'vs-dark',
+          automaticLayout: true,
+          minimap: { enabled: true }
+        });
+      }
+    
+      return () => {
+        if (editorRef.current) {
+          editorRef.current.dispose();
+          editorRef.current = null;
+        }
+      };
+    }, []);
+  
+    const handleFileSelect = useCallback((file) => {
+      if (!file.isDirectory) {
+        const content = fileSystem.cat(`${currentPath}/${file.name}`);
+        setCurrentFile(file);
+    
+        if (editorRef.current) {
+          let model = editorRef.current.getModel();
+          
+          if (!model) {
+            model = monaco.editor.createModel(content || '', 'plaintext');
+          } else {
+            model.setValue(content || '');
+          }
+          
+          if (model) {
+            editorRef.current.setModel(model);
+    
+            const fileExtension = file.name.split('.').pop();
+            const languageMap = {
+              'js': 'javascript',
+              'ts': 'typescript',
+              'py': 'python',
+              'html': 'html',
+              'css': 'css'
+            };
+            const newLang = languageMap[fileExtension] || 'plaintext';
+            monaco.editor.setModelLanguage(model, newLang);
+            setLanguage(newLang);
+          } else {
+            console.error("Failed to create or set model.");
+          }
+        } else {
+          console.error("Editor is not initialized.");
+        }
+      }
+    }, [fileSystem, currentPath]);
+  
+    const handleSave = useCallback(() => {
+      if (currentFile && editorRef.current) {
+        const content = editorRef.current.getValue();
+        fileSystem.updateFile(`${currentPath}/${currentFile.name}`, content);
+        setForceUpdate(prev => prev + 1);
+      }
+    }, [currentFile, fileSystem, currentPath]);
+  
+    const handleDeleteConfirm = useCallback((item) => {
+      setConfirmDialogProps({
+        message: `Are you sure you want to delete ${item.name}?`,
+        onConfirm: () => {
+          fileSystem.rm(`${currentPath}/${item.name}`);
+          if (currentFile && currentFile.name === item.name) {
+            setCurrentFile(null);
+            if (editorRef.current) {
+              editorRef.current.setValue('');
+            }
+          }
+          setForceUpdate(prev => prev + 1);
+          setShowConfirmDialog(false);
+        }
+      });
+      setShowConfirmDialog(true);
+    }, [currentFile, fileSystem, currentPath]);
+  
+    return (
+      <div className="flex flex-col h-full bg-gray-900 text-white">
+        {/* Menu bar */}
+        <div className="flex items-center bg-gray-800 p-2 text-sm">
+          <button className="px-2 hover:bg-gray-700">File</button>
+          <button className="px-2 hover:bg-gray-700">Edit</button>
+          <button className="px-2 hover:bg-gray-700">View</button>
+          <button className="px-2 hover:bg-gray-700">Help</button>
+          <button className="px-2 hover:bg-gray-700" onClick={handleSave}>Save</button>
+        </div>
+  
+        {/* Main content */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar (file explorer) */}
+          <div className="w-64 bg-gray-800 overflow-y-auto">
+            <FileExplorer 
+              fileSystem={fileSystem} 
+              onFileSelect={handleFileSelect} 
+              forceUpdate={forceUpdate}
+              onDeleteConfirm={handleDeleteConfirm}
+              currentPath={currentPath}
+            />
+          </div>
+  
+          {/* Editor */}
+          <div ref={containerRef} className="flex-grow" />
+        </div>
+  
+        {/* Status bar */}
+        <div className="flex justify-between items-center bg-blue-600 text-white text-xs p-1">
+          <div>{currentFile ? `${currentPath}/${currentFile.name}` : 'No file open'}</div>
+          <div>{language}</div>
+        </div>
+  
+        {/* Confirm Dialog */}
+        {showConfirmDialog && (
+          <ConfirmDialog
+            message={confirmDialogProps.message}
+            onConfirm={confirmDialogProps.onConfirm}
+            onCancel={() => setShowConfirmDialog(false)}
+          />
+        )}
       </div>
-
-      {/* Confirm Dialog */}
-      {showConfirmDialog && (
-        <ConfirmDialog
-          message={confirmDialogProps.message}
-          onConfirm={confirmDialogProps.onConfirm}
-          onCancel={() => setShowConfirmDialog(false)}
-        />
-      )}
-    </div>
-  );
-};
-
-export default VSCodeApp;
+    );
+  };
+  
+  export default VSCodeApp;
