@@ -9,6 +9,7 @@ import MailApp from './MailApp';
 import SafariApp from './SafariApp';
 import VSCodeApp from './VSCodeApp';
 import Launchpad from './Launchpad';
+import Game2048 from './Game2048';
 
 const appConfig = [
   {
@@ -88,6 +89,12 @@ const appConfig = [
     defaultSize: { width: 1024, height: 768 },
     showInDock: true,
   },
+  {
+    name: '2048',
+    icon: '🎮',
+    component: Game2048,
+    defaultSize: { width: 400, height: 650 }
+  }
 ];
 
 export default appConfig;
