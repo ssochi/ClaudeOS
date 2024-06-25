@@ -13,7 +13,21 @@ import Game2048 from './Game2048';
 import Tetris from './Tetris';
 import FileManagerApp from './FileManagerApp';
 import MessageApp from './MessageApp';
+import MapApp from './MapApp';
+import VideoPlayer from './VideoPlayer';
 const appConfig = [
+  {
+    name: 'Video Player',
+    icon: '🎞️',
+    component: VideoPlayer,
+    defaultSize: { width: 800, height: 600 }
+  },
+  {
+    name: 'Map',
+    icon: '🗺️',
+    component: MapApp,
+    defaultSize: { width: 800, height: 600 }
+  },
   {
     name: 'Launchpad',
     icon: '🚀',
