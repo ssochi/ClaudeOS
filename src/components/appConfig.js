@@ -12,6 +12,7 @@ import Launchpad from './Launchpad';
 import Game2048 from './Game2048';
 import Tetris from './Tetris';
 import FileManagerApp from './FileManagerApp';
+import MessageApp from './MessageApp';
 const appConfig = [
   {
     name: 'Launchpad',
@@ -37,9 +38,9 @@ const appConfig = [
   {
     name: 'Messages',
     icon: '💬',
-    component: ({ onClose }) => <div>This is the Messages window content.</div>,
-    defaultSize: { width: 400, height: 500 },
-    showInDock: false,
+    component: MessageApp,
+    defaultSize: { width: 400, height: 600 },
+    showInDock: true,
   },
   {
     name: 'Mail',
