@@ -39,7 +39,7 @@ const appConfig = [
     name: 'Messages',
     icon: '💬',
     component: MessageApp,
-    defaultSize: { width: 400, height: 600 },
+    defaultSize: { width: 800, height: 600 },
     showInDock: true,
   },
   {

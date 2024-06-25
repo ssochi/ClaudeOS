@@ -21,7 +21,7 @@ const MessageApp = ({ onClose }) => {
     ],
     3: [
       { id: 1, type: 'text', content: 'Alice, did you get my email?', sender: 'You', timestamp: '09:30 AM' },
-      { id: 2, type: 'text', content: 'Yes, I'll reply soon!', sender: 'Alice Johnson', timestamp: '09:35 AM' },
+      { id: 2, type: 'text', content: 'Yes, I\'ll reply soon!', sender: 'Alice Johnson', timestamp: '09:35 AM' },
     ],
   });
   const [newMessage, setNewMessage] = useState('');
