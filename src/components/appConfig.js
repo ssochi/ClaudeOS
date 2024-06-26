@@ -15,6 +15,7 @@ import FileManagerApp from './FileManagerApp';
 import MessageApp from './MessageApp';
 import MapApp from './MapApp';
 import VideoPlayer from './VideoPlayer';
+import ReactCodePreviewer from './ReactCodePreviewer';
 const appConfig = [
   {
     name: 'Video Player',
@@ -123,6 +124,12 @@ const appConfig = [
     component: FileManagerApp,
     defaultSize: { width: 800, height: 600 },
     showInDock: true,
+  },
+  {
+    name: 'React Previewer',
+    icon: '⚛️', // React logo emoji
+    component: ReactCodePreviewer,
+    defaultSize: { width: 800, height: 600 }
   },
 ];
 

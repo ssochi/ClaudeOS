@@ -2,6 +2,7 @@
   "name": "macos-react-simulator",
   "version": "0.1.0",
   "private": true,
+  "main": "src/electron.js",
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.14",
     "@fullcalendar/interaction": "^6.1.14",
@@ -32,7 +33,10 @@
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "electron:start": "concurrently \"BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "eslintConfig": {
     "extends": [
@@ -53,7 +57,23 @@
     ]
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^31.1.0",
+    "electron-builder": "^24.13.3",
+    "electron-is-dev": "^3.0.1",
     "monaco-editor-webpack-plugin": "^7.1.0",
-    "react-app-rewired": "^2.2.1"
+    "react-app-rewired": "^2.2.1",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.yourcompany.macosreactsimulator",
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "electron.js"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    }
   }
 }
