@@ -15,7 +15,23 @@ import FileManagerApp from './FileManagerApp';
 import MessageApp from './MessageApp';
 import MapApp from './MapApp';
 import VideoPlayer from './VideoPlayer';
+import ReactPlayground from './ReactPlayground';
+import AIAssistantApp from './AIAssistantApp/AIAssistantApp';
 const appConfig = [
+  {
+    name: 'AI Assistant',
+    icon: '🤖',
+    component: AIAssistantApp,
+    defaultSize: { width: 1200, height: 600 },
+    showInDock: true,
+  },
+  {
+    name: 'React Playground',
+    icon: '⚛️',
+    component: ReactPlayground,
+    defaultSize: { width: 1000, height: 600 },
+    showInDock: false,
+  },
   {
     name: 'Video Player',
     icon: '🎞️',

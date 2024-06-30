@@ -18,7 +18,8 @@ const SafariApp = () => {
 
   const navigateToUrl = (newUrl) => {
     setIsLoading(true);
-    setUrl(newUrl);
+    const proxyUrl = `http://localhost:3001/proxy/${encodeURIComponent(newUrl)}`;
+    setUrl(proxyUrl);
     setInputUrl(newUrl);
     const newHistory = [...history];
     newHistory.splice(currentIndex + 1);
