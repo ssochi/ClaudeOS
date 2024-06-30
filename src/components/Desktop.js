@@ -30,23 +30,26 @@ const Desktop = () => {
     }
 
     const newWindowId = Date.now();
-    const newWindow = { 
-      id: newWindowId, 
-      title: app.name, 
-      content: <app.component 
-        onClose={() => closeWindow(newWindowId)}
-        setWallpaper={app.name === 'Settings' ? setCurrentWallpaper : undefined}
-        wallpapers={app.name === 'Settings' ? wallpapers : undefined}
-        currentWallpaper={app.name === 'Settings' ? currentWallpaper : undefined}
-      />,
-      zIndex: windows.length + 1,
-      size: app.defaultSize,
-      isMinimized: false
-    };
-    setWindows(prevWindows => [...prevWindows, newWindow]);
+    setWindows(prevWindows => {
+      const maxZIndex = Math.max(...prevWindows.map(w => w.zIndex), 0);
+      const newWindow = { 
+        id: newWindowId, 
+        title: app.name, 
+        content: <app.component 
+          onClose={() => closeWindow(newWindowId)}
+          setWallpaper={app.name === 'Settings' ? setCurrentWallpaper : undefined}
+          wallpapers={app.name === 'Settings' ? wallpapers : undefined}
+          currentWallpaper={app.name === 'Settings' ? currentWallpaper : undefined}
+        />,
+        zIndex: maxZIndex + 1,
+        size: app.defaultSize,
+        isMinimized: false
+      };
+      return [...prevWindows, newWindow];
+    });
     setActiveWindowId(newWindowId);
     setIsLaunchpadOpen(false);
-  }, [windows, wallpapers, currentWallpaper]);
+  }, [wallpapers, currentWallpaper]);
 
   const closeWindow = (id) => {
     setWindows(prevWindows => prevWindows.filter(window => window.id !== id));
@@ -58,11 +61,14 @@ const Desktop = () => {
 
   const focusWindow = (id) => {
     setActiveWindowId(id);
-    setWindows(prevWindows => prevWindows.map(window => 
-      window.id === id 
-        ? {...window, zIndex: Math.max(...prevWindows.map(w => w.zIndex)) + 1, isMinimized: false} 
-        : window
-    ));
+    setWindows(prevWindows => {
+      const maxZIndex = Math.max(...prevWindows.map(w => w.zIndex));
+      return prevWindows.map(window => 
+        window.id === id 
+          ? {...window, zIndex: maxZIndex + 1, isMinimized: false} 
+          : window
+      );
+    });
   };
 
   const minimizeWindow = (id) => {

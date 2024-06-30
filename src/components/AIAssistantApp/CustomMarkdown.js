@@ -29,27 +29,38 @@ const CustomMarkdown = ({ content, onCopy }) => {
     const language = match ? match[1] : '';
     const code = String(children).replace(/\n$/, '');
 
-    return !inline ? (
-      <div className="relative">
-        <SyntaxHighlighter
-          style={tomorrow}
-          language={language}
-          PreTag="div"
-          {...props}
-        >
-          {code}
-        </SyntaxHighlighter>
-        <CopyToClipboard text={code} onCopy={onCopy}>
-          <button className="absolute top-2 right-2 bg-gray-700 text-white px-2 py-1 rounded text-xs">
-            Copy
-          </button>
-        </CopyToClipboard>
-      </div>
-    ) : (
-      <code className={className} {...props}>
-        {children}
-      </code>
-    );
+    if (!inline && match) {
+      return (
+        <div className="relative">
+          <SyntaxHighlighter
+            style={tomorrow}
+            language={language}
+            PreTag="div"
+            {...props}
+          >
+            {code}
+          </SyntaxHighlighter>
+          <CopyToClipboard text={code} onCopy={onCopy}>
+            <button className="absolute top-2 right-2 bg-gray-700 text-white px-2 py-1 rounded text-xs">
+              Copy
+            </button>
+          </CopyToClipboard>
+        </div>
+      );
+    } else if (inline) {
+      return (
+        <code className="bg-gray-100 rounded px-1 py-0.5 text-sm" {...props}>
+          {children}
+        </code>
+      );
+    } else {
+      // For non-language-specified code blocks
+      return (
+        <pre className="bg-gray-100 rounded p-2 my-2 whitespace-pre-wrap">
+          <code>{code}</code>
+        </pre>
+      );
+    }
   };
 
   return (

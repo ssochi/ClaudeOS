@@ -18,11 +18,18 @@ const proxy = httpProxy.createProxyServer();
 
 // 代理中间件
 app.use('/proxy', (req, res) => {
-  const targetUrl = req.url.slice(1);
+  let targetUrl = req.url.slice(1);
   
   if (!targetUrl) {
     return res.status(400).send('No target URL provided');
   }
+
+  // 确保 targetUrl 是一个完整的 URL
+  if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+    targetUrl = 'https://' + targetUrl;
+  }
+
+  console.log('Proxying to:', targetUrl); // 添加日志
 
   proxy.web(req, res, { target: targetUrl, changeOrigin: true }, (err) => {
     if (err) {
@@ -31,7 +38,6 @@ app.use('/proxy', (req, res) => {
     }
   });
 });
-
 
 // Helper function to validate API key
 const validateApiKey = (req, res, next) => {
@@ -111,5 +117,5 @@ app.post('/api/chat/stream', validateApiKey, async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  });
+  console.log(`Server running on port ${port}`);
+});

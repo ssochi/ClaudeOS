@@ -18,8 +18,11 @@ const SafariApp = () => {
 
   const navigateToUrl = (newUrl) => {
     setIsLoading(true);
-    const proxyUrl = `http://localhost:3001/proxy/${encodeURIComponent(newUrl)}`;
-    setUrl(proxyUrl);
+    // 确保 newUrl 是完整的 URL
+    if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+      newUrl = 'https://' + newUrl;
+    }
+    setUrl(newUrl);
     setInputUrl(newUrl);
     const newHistory = [...history];
     newHistory.splice(currentIndex + 1);

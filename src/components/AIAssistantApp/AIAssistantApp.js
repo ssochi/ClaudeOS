@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import MessageDisplay from './MessageDisplay';
 import ModelSelector from './ModelSelector';
 import FileDropZone from './FileDropZone';
+import AIAssistantLogic from './AIAssistantLogic';
 
 const AIAssistantApp = ({ onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -10,23 +11,22 @@ const AIAssistantApp = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState('');
-  const [copyNotification, setCopyNotification] = useState(null);
+  const [notification, setNotification] = useState(null);
   const [context, setContext] = useState(() => {
     const savedContext = localStorage.getItem('chatContext');
     return savedContext ? JSON.parse(savedContext) : '';
   });
-  const [uploadedFiles, setUploadedFiles] = useState(() => {
-    const savedFiles = localStorage.getItem('uploadedFiles');
-    return savedFiles ? JSON.parse(savedFiles) : [];
-  });
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const notificationRef = useRef(null);
 
   useEffect(() => {
     fetchModels();
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollToBottom();
   }, [messages]);
 
   useEffect(() => {
@@ -34,8 +34,18 @@ const AIAssistantApp = ({ onClose }) => {
   }, [context]);
 
   useEffect(() => {
-    localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
-  }, [uploadedFiles]);
+    if (notificationRef.current && notification) {
+      const element = notificationRef.current;
+      const elementWidth = element.offsetWidth;
+      element.style.left = `calc(50% - ${elementWidth / 2}px)`;
+    }
+  }, [notification]);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const fetchModels = async () => {
     try {
@@ -55,79 +65,13 @@ const AIAssistantApp = ({ onClose }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim() && uploadedFiles.length === 0) return;
-    if (!selectedModel) return;
-
-    let userMessage = { role: 'user', content: input };
-
-    setMessages(prevMessages => [...prevMessages, userMessage]);
-    setInput('');
-    setIsLoading(true);
-
-    let aiMessage = { role: 'assistant', content: '' };
-    setMessages(prevMessages => [...prevMessages, aiMessage]);
-
-    try {
-      const response = await fetch('http://localhost:3001/api/chat/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: selectedModel,
-          messages: [
-            { role: 'system', content: `Context: ${context}` },
-            ...messages,
-            userMessage
-          ]
-        })
-      });
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data:')) {
-            const content = line.slice(6);
-            if (content === "[DONE]") {
-              return; // End of the stream
-            }
-            try {
-              const jsonData = JSON.parse(line.slice(5));
-              if (jsonData.choices && jsonData.choices[0].delta.content) {
-                aiMessage.content += jsonData.choices[0].delta.content;
-                setMessages(prevMessages => [
-                  ...prevMessages.slice(0, -1),
-                  { ...aiMessage }
-                ]);
-              }
-            } catch (error) {
-              console.error('Error parsing JSON:', error);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages(prevMessages => [...prevMessages, { role: 'system', content: 'Sorry, there was an error processing your request.' }]);
-    } finally {
-      setIsLoading(false);
-    }
+  const showNotification = (message) => {
+    setNotification({ message, id: Date.now() });
+    setTimeout(() => setNotification(null), 2000);
   };
 
   const handleCopyNotification = () => {
-    setCopyNotification({ message: 'Code copied!', id: Date.now() });
-    setTimeout(() => setCopyNotification(null), 2000);
+    showNotification('Code copied!');
   };
 
   const handleFileUpload = (files) => {
@@ -136,46 +80,21 @@ const AIAssistantApp = ({ onClose }) => {
       content: file.content
     }));
     setUploadedFiles(prevFiles => [...prevFiles, ...newFiles]);
-    
-    // Immediately update the context when files are uploaded
-    const newContext = newFiles.map(file => `File: ${file.name}\n\nContent:\n${file.content}`).join('\n\n');
-    setContext(prevContext => prevContext ? `${prevContext}\n\n${newContext}` : newContext);
-
-    setMessages(prevMessages => [
-      ...prevMessages,
-      { role: 'system', content: `Files uploaded successfully: ${newFiles.map(file => file.name).join(', ')}` }
-    ]);
   };
 
   const handleRemoveFile = (fileName) => {
     setUploadedFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
-    
-    // Immediately update the context when a file is removed
-    setContext(prevContext => {
-      const lines = prevContext.split('\n');
-      const newLines = lines.filter(line => !line.includes(`File: ${fileName}`));
-      return newLines.join('\n');
-    });
-
-    setMessages(prevMessages => [
-      ...prevMessages,
-      { role: 'system', content: `File removed: ${fileName}` }
-    ]);
   };
 
   const clearContext = () => {
     setContext('');
     setUploadedFiles([]);
     localStorage.removeItem('chatContext');
-    localStorage.removeItem('uploadedFiles');
-    setMessages(prevMessages => [
-      ...prevMessages,
-      { role: 'system', content: 'All context has been cleared.' }
-    ]);
+    showNotification('Context cleared successfully!');
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-100 font-sans">
+    <div className="flex flex-col h-full bg-gray-100 font-sans relative">
       <div className="bg-gray-200 p-4 flex justify-between items-center border-b border-gray-300">
         <h2 className="text-xl font-semibold text-gray-800">AI Assistant</h2>
         <div className="flex items-center">
@@ -193,7 +112,7 @@ const AIAssistantApp = ({ onClose }) => {
         </div>
       </div>
       <FileDropZone onFileUpload={handleFileUpload}>
-        <div className="flex-grow overflow-auto p-4">
+        <div ref={chatContainerRef} className="flex-grow overflow-auto p-4">
           <MessageDisplay
             messages={messages}
             onCopy={handleCopyNotification}
@@ -201,50 +120,35 @@ const AIAssistantApp = ({ onClose }) => {
           <div ref={messagesEndRef} />
         </div>
       </FileDropZone>
-      <div className="p-4 bg-white border-t border-gray-200">
-        {uploadedFiles.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2">
-            {uploadedFiles.map((file, index) => (
-              <div key={index} className="flex items-center bg-blue-100 p-2 rounded">
-                <span className="text-sm text-blue-800 mr-2">{file.name}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveFile(file.name)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="flex items-center">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Sending...' : 'Send'}
-          </button>
-        </form>
-      </div>
+      <AIAssistantLogic
+        input={input}
+        setInput={setInput}
+        isLoading={isLoading}
+        setIsLoading={setIsLoading}
+        messages={messages}
+        setMessages={setMessages}
+        selectedModel={selectedModel}
+        context={context}
+        setContext={setContext}
+        uploadedFiles={uploadedFiles}
+        setUploadedFiles={setUploadedFiles}
+        scrollToBottom={scrollToBottom}
+        handleRemoveFile={handleRemoveFile}
+      />
       <AnimatePresence>
-        {copyNotification && (
+        {notification && (
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            ref={notificationRef}
+            initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg"
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg z-50 flex items-center justify-center"
+            style={{
+              maxWidth: '90vw',
+              width: 'auto',
+            }}
           >
-            {copyNotification.message}
+            {notification.message}
           </motion.div>
         )}
       </AnimatePresence>

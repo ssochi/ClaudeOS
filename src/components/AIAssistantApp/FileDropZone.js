@@ -31,10 +31,12 @@ const FileDropZone = ({ onFileUpload, children }) => {
   return (
     <div
       {...getRootProps()}
-      className="relative flex-grow overflow-auto"
+      className="relative flex-grow overflow-hidden flex flex-col"
     >
       <input {...getInputProps()} />
-      {children}
+      <div className="flex-grow overflow-auto">
+        {children}
+      </div>
       {isDragActive && (
         <div className="absolute inset-0 flex items-center justify-center bg-blue-100 bg-opacity-75 z-50">
           <p className="text-blue-500 font-bold text-xl">Drop your files here</p>
