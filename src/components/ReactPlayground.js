@@ -4,27 +4,62 @@ import * as monaco from 'monaco-editor';
 import * as Babel from '@babel/standalone';
 import * as HeroIcons from '@heroicons/react/24/solid';
 
+const Header = ({ isPreviewMode, onToggleView }) => (
+  <div className="flex items-center justify-between bg-gray-800 text-white p-2">
+    <div className="flex items-center">
+      <span className="font-bold mr-4">Preview Demo.js</span>
+      <button
+        onClick={onToggleView}
+        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded flex items-center"
+      >
+        {isPreviewMode ? (
+          <>
+            <HeroIcons.CodeBracketIcon className="w-4 h-4 mr-1" />
+            Code
+          </>
+        ) : (
+          <>
+            <HeroIcons.EyeIcon className="w-4 h-4 mr-1" />
+            Preview
+          </>
+        )}
+      </button>
+    </div>
+    <div className="flex">
+      <button className="text-gray-300 hover:text-white mx-2">
+        <HeroIcons.ArrowPathIcon className="w-5 h-5" />
+      </button>
+      <button className="text-gray-300 hover:text-white mx-2">
+        <HeroIcons.XMarkIcon className="w-5 h-5" />
+      </button>
+    </div>
+  </div>
+);
+
 const ReactPlayground = () => {
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [code, setCode] = useState('');
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState(null);
   const [editor, setEditor] = useState(null);
 
   useEffect(() => {
-    const monacoEditor = monaco.editor.create(document.getElementById('codeEditor'), {
-      value: '',
-      language: 'javascript',
-      theme: 'vs-dark',
-      automaticLayout: true,
-      minimap: { enabled: false }
-    });
+    if (!isPreviewMode) {
+      const monacoEditor = monaco.editor.create(document.getElementById('codeEditor'), {
+        value: code,
+        language: 'javascript',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        minimap: { enabled: false }
+      });
 
-    setEditor(monacoEditor);
+      setEditor(monacoEditor);
 
-    return () => {
-      monacoEditor.dispose();
-    };
-  }, []);
+      return () => {
+        monacoEditor.dispose();
+      };
+    }
+  }, [isPreviewMode, code]);
 
   const handleRunCode = useCallback(() => {
     if (!editor) return;
@@ -36,14 +71,8 @@ const ReactPlayground = () => {
       // Clear previous error
       setError(null);
 
-      // Remove import statements but keep track of what's imported
-      const imports = {};
-      currentCode = currentCode.replace(/import\s+(?:{[^}]+}|\*\s+as\s+\w+|\w+)\s+from\s+['"][^'"]+['"]/g, (match) => {
-        const importName = match.match(/import\s+(\w+|\*\s+as\s+\w+|\{[^}]+\})/)[1];
-        const fromModule = match.match(/from\s+['"]([^'"]+)['"]/)[1];
-        imports[importName] = fromModule;
-        return '';
-      });
+      // Remove all lines starting with 'import' and ending with ';'
+      currentCode = currentCode.split('\n').filter(line => !line.trim().startsWith('import') || !line.trim().endsWith(';')).join('\n');
 
       // Remove export statements and identify the exported component
       let exportedComponent = null;
@@ -58,33 +87,14 @@ const ReactPlayground = () => {
         filename: 'component.jsx'
       }).code;
 
-      // Map of dependencies from package.json
-      const dependencies = {
-        'react': React,
-        'react-dom': require('react-dom'),
-        'framer-motion': { motion },
-        '@heroicons/react/24/solid': HeroIcons,
-        // Add other dependencies as needed
-      };
-
       // Wrap the transformed code
       const wrappedCode = `
         (function() {
           const React = window.React;
-          const { useState, useEffect, useCallback } = React;
+          const { useState, useEffect, useCallback, useRef } = React;
           const { motion } = window.FramerMotion;
           const HeroIcons = window.HeroIcons;
 
-          // Simulate import behavior
-          ${Object.entries(imports).map(([name, module]) => `const ${name} = require('${module}');`).join('\n')}
-
-          function require(module) {
-            switch(module) {
-              ${Object.entries(dependencies).map(([name, value]) => `case '${name}': return ${JSON.stringify(value)};`).join('\n')}
-              default:
-                throw new Error(\`Module not found: \${module}\`);
-            }
-          }
 
           ${transformedCode}
 
@@ -97,34 +107,38 @@ const ReactPlayground = () => {
 
       // Set the preview
       setPreview(React.createElement(Component));
+      setIsPreviewMode(true);
     } catch (err) {
       console.error(err);
       setError(err.toString());
     }
   }, [editor]);
 
+  const handleToggleView = () => {
+    if (isPreviewMode) {
+      setIsPreviewMode(false);
+    } else {
+      handleRunCode();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-grow flex">
-        <div id="codeEditor" className="w-1/2 h-full"></div>
-        <div className="w-1/2 h-full p-4 bg-gray-100 overflow-auto">
-          <h2 className="text-xl font-bold mb-4">Preview</h2>
-          {error ? (
-            <div className="text-red-500 whitespace-pre-wrap">{error}</div>
-          ) : (
-            <div className="border border-gray-300 p-4 bg-white rounded">
-              {preview}
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="p-4 bg-gray-200 flex justify-center">
-        <button 
-          onClick={handleRunCode}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Run Code
-        </button>
+      <Header isPreviewMode={isPreviewMode} onToggleView={handleToggleView} />
+      <div className="flex-grow">
+        {isPreviewMode ? (
+          <div className="h-full p-4 bg-gray-100 overflow-auto">
+            {error ? (
+              <div className="text-red-500 whitespace-pre-wrap">{error}</div>
+            ) : (
+              <div className="border border-gray-300 p-4 bg-white rounded h-full">
+                {preview}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div id="codeEditor" className="h-full"></div>
+        )}
       </div>
     </div>
   );

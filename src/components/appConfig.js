@@ -17,7 +17,14 @@ import MapApp from './MapApp';
 import VideoPlayer from './VideoPlayer';
 import ReactPlayground from './ReactPlayground';
 import AIAssistantApp from './AIAssistantApp/AIAssistantApp';
+import GoldenShinyCard3D  from './ShinyCard3D';
 const appConfig = [
+  {
+    name: 'Shader Cards',
+    icon: '🃏', // Card emoji
+    component: GoldenShinyCard3D,
+    defaultSize: { width: 800, height: 600 }
+  },
   {
     name: 'AI Assistant',
     icon: '🤖',
@@ -77,13 +84,6 @@ const appConfig = [
     icon: '✉️',
     component: MailApp,
     defaultSize: { width: 800, height: 600 },
-    showInDock: true,
-  },
-  {
-    name: 'Notepad',
-    icon: '📝',
-    component: Notepad,
-    defaultSize: { width: 1000, height: 600 },
     showInDock: true,
   },
   {
